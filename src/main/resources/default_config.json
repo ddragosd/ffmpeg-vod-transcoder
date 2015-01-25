@@ -1,0 +1,106 @@
+{
+  "trim": {
+    "start": 0,
+    "end": 0
+  },
+  "sd_outputs": [
+    {
+      "width": 1440,
+      "height": 1080,
+      "bitrate": 2200,
+      "audio_codec": "copy",
+      "video_codec": "libx264"
+    },
+    {
+      "width": 960,
+      "height": 720,
+      "bitrate": 1000,
+      "audio_codec": "copy",
+      "video_codec": "libx264"
+    },
+    {
+      "width": 640,
+      "height": 480,
+      "bitrate": 600,
+      "audio_codec": "copy",
+      "video_codec": "libx264"
+    },
+    {
+      "width": 480,
+      "height": 360,
+      "bitrate": 300,
+      "audio_codec": "libfdk_aac",
+      "audio_bitrate": 96,
+      "video_codec": "libx264"
+    },
+    {
+      "width": 320,
+      "height": 240,
+      "bitrate": 150,
+      "audio_codec": "libfdk_aac",
+      "audio_bitrate": 96,
+      "video_codec": "libx264"
+    },
+    {
+      "width": 214,
+      "height": 160,
+      "bitrate": 64,
+      "audio_codec": "libfdk_aac",
+      "audio_bitrate": 48,
+      "video_codec": "libx264"
+    }
+  ],
+  "hd_outputs": [
+    {
+      "width": 1920,
+      "height": 1080,
+      "bitrate": 2200,
+      "audio_codec": "copy",
+      "video_codec": "libx264"
+    },
+    {
+      "width": 1280,
+      "height": 720,
+      "bitrate": 1200,
+      "audio_codec": "copy",
+      "video_codec": "libx264"
+    },
+    {
+      "width": 854,
+      "height": 480,
+      "bitrate": 600,
+      "audio_codec": "copy",
+      "video_codec": "libx264"
+    },
+    {
+      "width": 640,
+      "height": 360,
+      "bitrate": 300,
+      "audio_codec": "libfdk_aac",
+      "audio_bitrate": 96,
+      "video_codec": "libx264"
+    },
+    {
+      "width": 426,
+      "height": 240,
+      "bitrate": 150,
+      "audio_codec": "libfdk_aac",
+      "audio_bitrate": 96,
+      "video_codec": "libx264"
+    },
+    {
+      "width": 284,
+      "height": 160,
+      "bitrate": 10,
+      "audio_codec": "libfdk_aac",
+      "audio_bitrate": 48,
+      "video_codec": "libx264"
+    }
+  ],
+  "snapshot_at": "00:00:00",
+  "callback_url": "http://user:pass@domain.com/jobs/123",
+  "destination": {
+    "type": "aws-s3",
+    "url": "http://user:password@s3.us-east-1.amazonaws.com/bucket/path/to/encoded-folder/"
+  }
+}
