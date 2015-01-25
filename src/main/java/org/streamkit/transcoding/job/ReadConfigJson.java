@@ -80,7 +80,10 @@ public class ReadConfigJson implements Step {
     }
 
     protected String getConfigJsonProperty() {
-        return env.getProperty("configJson");
+        if (env != null) {
+            return env.getProperty("configJson");
+        }
+        return "{}";
     }
 
 }
