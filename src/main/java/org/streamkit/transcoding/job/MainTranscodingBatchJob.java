@@ -31,14 +31,4 @@ public class MainTranscodingBatchJob  {
                 .build();
     }
 
-    @Bean
-    public ObjectMapper getJsonReader() {
-        return new ObjectMapper();
-    }
-
-    /*@Bean
-    protected Step readConfig() {
-        return new ReadConfigJson();
-    }*/
-
 }
