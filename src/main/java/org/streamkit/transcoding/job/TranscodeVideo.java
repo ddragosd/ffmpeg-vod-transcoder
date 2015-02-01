@@ -8,14 +8,12 @@ import org.streamkit.transcoding.model.TranscodingModel;
 import org.streamkit.transcoding.model.VideoOutput;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 /**
  * Created by ddascal on 22/01/15.
@@ -44,8 +42,8 @@ public class TranscodeVideo implements Step {
         logger.info("Transcoding video file");
         TranscodingModel model = (TranscodingModel) stepExecution.getJobExecution().getExecutionContext().get("model");
 
-        VideoInputMetadata fOut = this.getFFmpegMediaParameters(model);
-        TranscodingModel reducedModel = this.reduceConfigToVideoMetadata(fOut, model);
+        VideoInputMetadata inputMeta = this.getFFmpegMediaParameters(model);
+        TranscodingModel reducedModel = this.reduceConfigToVideoMetadata(inputMeta, model);
 
         if (transcode(reducedModel)) {
             stepExecution.setStatus(BatchStatus.COMPLETED);
@@ -72,10 +70,27 @@ public class TranscodeVideo implements Step {
             e.printStackTrace();
         }
 
-        // TODO: create final ffmpeg command based on the updated model
-        // TODO: use java 8 stream to reduce the model to a String which is passed to the ffmpeg command
+        List<VideoOutput> outputs = reducedModel.getHd_outputs() != null ? reducedModel.getHd_outputs() : reducedModel.getSd_outputs();
+
+        String fileName = this.extractFileName(reducedModel.getSource());
+        StringBuilder ffmpegCmdBuilder = new StringBuilder();
+        ffmpegCmdBuilder.append("ffmpeg -i ")
+                .append(reducedModel.getSource())
+                .append(" ")
+                .append(outputs.stream()
+                        .map(o -> String.format("-f mp4 -c:a copy -c:v %s -s %dx%d -x264opts bitrate=%d %s ",
+                                        o.getVideo_codec(), o.getWidth(), o.getHeight(), o.getBitrate(),
+                                        reducedModel.getDestination().getFile_name_template()
+                                                .replaceAll("\\$width", String.valueOf(o.getWidth()))
+                                                .replaceAll("\\$height", String.valueOf(o.getHeight()))
+                                                .replaceAll("\\$bitrate", String.valueOf(o.getBitrate()))
+                                                .replaceAll("\\$originalFileName", fileName) + ".mp4")
+                        ).reduce("", (a, b) -> a + b)
+                );
+        String[] commands = ffmpegCmdBuilder.toString().split(" ");
+        // TODO: include trim
         // see: http://docs.oracle.com/javase/tutorial/collections/streams/parallelism.html
-        ProcessBuilder pb = new ProcessBuilder("ffmpeg", "-i", reducedModel.getSource()).inheritIO();
+        ProcessBuilder pb = new ProcessBuilder(commands).inheritIO();
 //        pb.directory(new File("myDir"));
 //        File log = new File("/var/log/streamkit/ffmpeg-output.log");
 //        pb.redirectOutput(ProcessBuilder.Redirect.appendTo(log));
@@ -132,23 +147,37 @@ public class TranscodeVideo implements Step {
 
         //2. reduce the config to the size of the video, stripping the high qualities
         if (isHD) {
-            List<VideoOutput> filteredOutputsList = filterVideoOutputListUsingBitrate(model.getHd_outputs(), fOut.bitrate);
+            List<VideoOutput> filteredOutputsList = filterVideoOutputList(model.getHd_outputs(), fOut);
             model.setHd_outputs(filteredOutputsList);
             model.setSd_outputs(null);
         } else {
-            List<VideoOutput> filteredOutputsList = filterVideoOutputListUsingBitrate(model.getSd_outputs(), fOut.bitrate);
+            List<VideoOutput> filteredOutputsList = filterVideoOutputList(model.getSd_outputs(), fOut);
             model.setHd_outputs(null);
             model.setSd_outputs(filteredOutputsList);
         }
         return model;
     }
 
-    protected List<VideoOutput> filterVideoOutputListUsingBitrate(List<VideoOutput> outputs, double bitrate) {
+    protected List<VideoOutput> filterVideoOutputList(List<VideoOutput> outputs, VideoInputMetadata metadata) {
         VideoOutput[] filteredOutputs = outputs
                 .stream()
-                .filter(o -> o.getBitrate() <= bitrate)
+                .filter(o -> o.getWidth() <= metadata.width)
+                .sorted((v1, v2) -> {
+                    if (v1.getBitrate() < v2.getBitrate()) {
+                        return 1;
+                    }
+                    if (v1.getBitrate() > v2.getBitrate()) {
+                        return -1;
+                    }
+
+                    return 0;
+                })
                 .toArray(VideoOutput[]::new);
+        if (filteredOutputs[0].getBitrate() > metadata.bitrate) {
+            filteredOutputs[0].setBitrate((int) metadata.bitrate);
+        }
         List<VideoOutput> filteredOutputsList = new ArrayList(Arrays.asList(filteredOutputs));
+
         return filteredOutputsList;
     }
 
@@ -161,17 +190,21 @@ public class TranscodeVideo implements Step {
         return null;
     }
 
-    protected class VideoInputMetadata {
-      public double width;
-      public double height;
-      public double bitrate;
+    protected String extractFileName(String sourceURl) {
+        return "demo";
+    }
 
-      public VideoInputMetadata(final double width, final double height, final double bitrate) {
-          this.width = width;
-          this.height = height;
-          this.bitrate = bitrate;
-      }
-  }
+    protected class VideoInputMetadata {
+        public double width;
+        public double height;
+        public double bitrate;
+
+        public VideoInputMetadata(final double width, final double height, final double bitrate) {
+            this.width = width;
+            this.height = height;
+            this.bitrate = bitrate;
+        }
+    }
 
 
 }

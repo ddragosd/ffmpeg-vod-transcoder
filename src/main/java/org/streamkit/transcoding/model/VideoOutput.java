@@ -3,7 +3,7 @@ package org.streamkit.transcoding.model;
 /**
  * Created by ddascal on 22/01/15.
  */
-public class VideoOutput implements Comparable<VideoOutput> {
+public class VideoOutput {
     private int width;
     private int height;
     private int bitrate;
@@ -59,14 +59,4 @@ public class VideoOutput implements Comparable<VideoOutput> {
         this.video_codec = video_codec;
     }
 
-    @Override
-    public int compareTo(VideoOutput o) {
-        if ( this.bitrate > o.bitrate ) {
-            return 1;
-        }
-        if ( this.bitrate < o.bitrate ) {
-            return -1;
-        }
-        return 0;
-    }
 }

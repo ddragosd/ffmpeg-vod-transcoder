@@ -8,6 +8,16 @@ public class VideoDestination {
     private String type; // aws-s3, ftp, etc
     private String url;
 
+    public String getFile_name_template() {
+        return file_name_template;
+    }
+
+    public void setFile_name_template(String file_name_template) {
+        this.file_name_template = file_name_template;
+    }
+
+    private String file_name_template;
+
     public String getType() {
         return type;
     }

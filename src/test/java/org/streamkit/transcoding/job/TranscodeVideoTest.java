@@ -25,11 +25,14 @@ public class TranscodeVideoTest {
     @Autowired
     private TranscodeVideo transcodeVideo;
 
-    private final static String sourceVideoFile = Thread.currentThread().getContextClassLoader().getResource("mira.mp4").getPath();
+    private final static String sourceVideoFile = Thread.currentThread().getContextClassLoader().getResource("mira.flv").getPath();
 
     @Test
-    public void testExecute() throws Exception {
-        transcodeVideo.transcode(config.getTranscodingModel("{\"source\":\"" + sourceVideoFile + "\"}"));
+    public void testTranscode() throws Exception {
+        TranscodingModel model = config.getTranscodingModel("{\"source\":\"" + sourceVideoFile + "\"}");
+        TranscodeVideo.VideoInputMetadata inputMeta = transcodeVideo.getFFmpegMediaParameters(model);
+        TranscodingModel reducedModel = transcodeVideo.reduceConfigToVideoMetadata(inputMeta, model);
+        transcodeVideo.transcode(reducedModel);
         assertTrue(true);
     }
 
@@ -56,25 +59,35 @@ public class TranscodeVideoTest {
 
     @Test
     public void testReduceConfigToVideoMetadata () {
-        TranscodeVideo.VideoInputMetadata fOut = new TranscodeVideo().new VideoInputMetadata(630, 480, 100);
+        TranscodeVideo.VideoInputMetadata fOut = new TranscodeVideo().new VideoInputMetadata(640, 480, 100);
 
         TranscodingModel model = new TranscodingModel();
         model.setSource(sourceVideoFile);
 
         VideoOutput sdOut1 = new VideoOutput();
         sdOut1.setBitrate(64);
+        sdOut1.setWidth(320);
+        sdOut1.setHeight(200);
         VideoOutput sdOut2 = new VideoOutput();
-        sdOut2.setBitrate(150);
+        sdOut2.setBitrate(350);
+        sdOut2.setWidth(640);
+        sdOut2.setHeight(480);
+        VideoOutput sdOut3 = new VideoOutput();
+        sdOut3.setBitrate(800);
+        sdOut3.setWidth(720);
+        sdOut3.setHeight(575);
 
         List<VideoOutput> sdOutList = new ArrayList<>();
         sdOutList.add(sdOut1);
         sdOutList.add(sdOut2);
+        sdOutList.add(sdOut3);
 
         model.setSd_outputs(sdOutList);
-        assertEquals(2, model.getSd_outputs().size());
+        assertEquals(3, model.getSd_outputs().size());
 
         TranscodingModel reducedModel = transcodeVideo.reduceConfigToVideoMetadata(fOut, model);
-        assertEquals(1, reducedModel.getSd_outputs().size());
+        assertEquals(2, reducedModel.getSd_outputs().size());
+        assertEquals("The video bitrate should be at most the input bitrate", 100, reducedModel.getSd_outputs().get(0).getBitrate());
         assertNull(reducedModel.getHd_outputs());
     }
 }
