@@ -191,7 +191,12 @@ public class TranscodeVideo implements Step {
     }
 
     protected String extractFileName(String sourceURl) {
-        return "demo";
+        Pattern p = Pattern.compile("\\/(?<filename>[^\\/]*)\\.(?<extension>\\w*)$");
+        Matcher m = p.matcher(sourceURl);
+        if (m.find()) {
+            return m.group("filename");
+        }
+        return null;
     }
 
     protected class VideoInputMetadata {
