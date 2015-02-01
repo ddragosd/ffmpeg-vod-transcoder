@@ -57,7 +57,7 @@ public class ReadConfigJson implements Step {
             logger.severe("Could not read default configuration. Please verify that the file is in your classpath");
             stepExecution.setStatus(BatchStatus.FAILED);
         }
-
+        stepExecution.getJobExecution().getExecutionContext().put("model", transcodingModel);
         stepExecution.setStatus(BatchStatus.COMPLETED);
     }
 

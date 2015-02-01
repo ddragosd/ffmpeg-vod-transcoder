@@ -5,9 +5,12 @@ import java.util.List;
 
 /**
  * Contains the information about the file to be transcoded.
- *
  */
 public class TranscodingModel {
+    /**
+     * The file to be encoded: a file path or a URL
+     */
+    private String source;
     private List<VideoOutput> sd_outputs = new ArrayList<>();
     private List<VideoOutput> hd_outputs = new ArrayList<>();
     private String snapshot_at;
@@ -16,6 +19,14 @@ public class TranscodingModel {
     private VideoDestination destination;
 
     private VideoTrim trim;
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
 
     public VideoTrim getTrim() {
         return trim;

@@ -1,4 +1,5 @@
 {
+  "source":"http://domain.com/path/to/video/file",
   "trim": {
     "start": 0,
     "end": 0
