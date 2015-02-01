@@ -29,8 +29,8 @@ public class ReadConfigJsonTest {
         assertEquals("custom_value", transcodingModel.getCallback_url());
         assertEquals(0, transcodingModel.getTrim().getStart());
         assertEquals(0, transcodingModel.getTrim().getEnd());
-        assertEquals(6, transcodingModel.getSd_outputs().size());
-        assertEquals(6, transcodingModel.getHd_outputs().size());
+        assertEquals(3, transcodingModel.getSd_outputs().size());
+        assertEquals(3, transcodingModel.getHd_outputs().size());
     }
 
     @Test

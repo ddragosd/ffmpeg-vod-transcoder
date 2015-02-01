@@ -52,9 +52,9 @@ public class TranscodeVideoTest {
         model.setSource(sourceVideoFile);
 
         TranscodeVideo.VideoInputMetadata fOut = transcodeVideo.getFFmpegMediaParameters(model);
-        assertEquals(640, fOut.width, 0);
+        assertEquals(720, fOut.width, 0);
         assertEquals(480, fOut.height, 0);
-        assertEquals(28, fOut.bitrate, 0);
+        assertEquals(1638, fOut.bitrate, 0);
     }
 
     @Test
