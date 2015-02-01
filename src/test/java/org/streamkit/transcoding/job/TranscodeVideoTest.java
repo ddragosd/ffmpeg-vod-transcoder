@@ -56,7 +56,7 @@ public class TranscodeVideoTest {
 
     @Test
     public void testReduceConfigToVideoMetadata () {
-        TranscodeVideo.VideoInputMetadata fOut = new TranscodeVideo().newVideoInputMetadata(630D, 480D, 100D);
+        TranscodeVideo.VideoInputMetadata fOut = new TranscodeVideo().new VideoInputMetadata(630, 480, 100);
 
         TranscodingModel model = new TranscodingModel();
         model.setSource(sourceVideoFile);

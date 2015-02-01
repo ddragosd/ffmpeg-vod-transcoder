@@ -156,13 +156,9 @@ public class TranscodeVideo implements Step {
         Pattern p = Pattern.compile("^.*Stream.*Video.*\\s(?<width>\\d+)x(?<height>\\d+).*\\s(?<bitrate>\\d+)\\skb\\/s.*$", Pattern.MULTILINE);
         Matcher m = p.matcher(ffmpegOutput);
         if (m.find()) {
-            return this.newVideoInputMetadata(Double.valueOf(m.group("width")), Double.valueOf(m.group("height")), Double.valueOf(m.group("bitrate")));
+            return new VideoInputMetadata(Double.valueOf(m.group("width")), Double.valueOf(m.group("height")), Double.valueOf(m.group("bitrate")));
         }
         return null;
-    }
-
-    protected VideoInputMetadata newVideoInputMetadata(final double width, final double height, final double bitrate) {
-        return new VideoInputMetadata(width, height, bitrate);
     }
 
     protected class VideoInputMetadata {
