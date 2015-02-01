@@ -6,7 +6,6 @@ import org.springframework.batch.core.*;
 import org.springframework.stereotype.Component;
 import org.streamkit.transcoding.model.TranscodingModel;
 import org.streamkit.transcoding.model.VideoOutput;
-import org.streamkit.transcoding.util.FFmpegOutput;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -45,7 +44,7 @@ public class TranscodeVideo implements Step {
         logger.info("Transcoding video file");
         TranscodingModel model = (TranscodingModel) stepExecution.getJobExecution().getExecutionContext().get("model");
 
-        FFmpegOutput fOut = this.getFFmpegMediaParameters(model);
+        VideoInputMetadata fOut = this.getFFmpegMediaParameters(model);
         TranscodingModel reducedModel = this.reduceConfigToVideoMetadata(fOut, model);
 
         if (transcode(reducedModel)) {
@@ -97,7 +96,7 @@ public class TranscodeVideo implements Step {
         return true;
     }
 
-    protected FFmpegOutput getFFmpegMediaParameters(TranscodingModel model) throws JobInterruptedException {
+    protected VideoInputMetadata getFFmpegMediaParameters(TranscodingModel model) throws JobInterruptedException {
         ProcessBuilder pb = new ProcessBuilder("ffmpeg", "-i", model.getSource());
         Process p;
         try {
@@ -110,7 +109,7 @@ public class TranscodeVideo implements Step {
                 stringBuilder.append(System.getProperty("line.separator"));
             }
             String ffmpegOutput = stringBuilder.toString();
-            FFmpegOutput fOut = extractWidthHeightBitrate(ffmpegOutput);
+            VideoInputMetadata fOut = extractWidthHeightBitrate(ffmpegOutput);
             logger.info(String.format("Video Info:\n%s\n\n", ffmpegOutput));
             if (fOut == null) {
                 throw new JobInterruptedException("Could not read video info.");
@@ -124,20 +123,20 @@ public class TranscodeVideo implements Step {
     }
 
 
-    protected TranscodingModel reduceConfigToVideoMetadata(FFmpegOutput fOut, TranscodingModel model) {
+    protected TranscodingModel reduceConfigToVideoMetadata(VideoInputMetadata fOut, TranscodingModel model) {
 
         //1. determine if this is an HD stream or not by the ratio
-        boolean isHD = fOut.getWidth() / fOut.getHeight() >= 1.60D;
+        boolean isHD = fOut.width / fOut.height >= 1.60D;
         logger.info(String.format("Width=%.2f, Height=%.2f, Bitrate=%.2f, HD=%b",
-                fOut.getWidth(), fOut.getHeight(), fOut.getBitrate(), isHD));
+                fOut.width, fOut.height, fOut.bitrate, isHD));
 
         //2. reduce the config to the size of the video, stripping the high qualities
         if (isHD) {
-            List<VideoOutput> filteredOutputsList = filterVideoOutputListUsingBitrate(model.getHd_outputs(), fOut.getBitrate());
+            List<VideoOutput> filteredOutputsList = filterVideoOutputListUsingBitrate(model.getHd_outputs(), fOut.bitrate);
             model.setHd_outputs(filteredOutputsList);
             model.setSd_outputs(null);
         } else {
-            List<VideoOutput> filteredOutputsList = filterVideoOutputListUsingBitrate(model.getSd_outputs(), fOut.getBitrate());
+            List<VideoOutput> filteredOutputsList = filterVideoOutputListUsingBitrate(model.getSd_outputs(), fOut.bitrate);
             model.setHd_outputs(null);
             model.setSd_outputs(filteredOutputsList);
         }
@@ -153,22 +152,30 @@ public class TranscodeVideo implements Step {
         return filteredOutputsList;
     }
 
-    /**
-     * returns an array containing [width, height, bitrate]
-     *
-     * @param ffmpegOutput
-     * @return
-     */
-    protected FFmpegOutput extractWidthHeightBitrate(String ffmpegOutput) {
+    protected VideoInputMetadata extractWidthHeightBitrate(String ffmpegOutput) {
         Pattern p = Pattern.compile("^.*Stream.*Video.*\\s(?<width>\\d+)x(?<height>\\d+).*\\s(?<bitrate>\\d+)\\skb\\/s.*$", Pattern.MULTILINE);
         Matcher m = p.matcher(ffmpegOutput);
         if (m.find()) {
-            return new FFmpegOutput(Double.valueOf(m.group("width")), Double.valueOf(m.group("height")), Double.valueOf(m.group("bitrate")));
+            return this.newVideoInputMetadata(Double.valueOf(m.group("width")), Double.valueOf(m.group("height")), Double.valueOf(m.group("bitrate")));
         }
         return null;
     }
 
+    protected VideoInputMetadata newVideoInputMetadata(final double width, final double height, final double bitrate) {
+        return new VideoInputMetadata(width, height, bitrate);
+    }
 
+    protected class VideoInputMetadata {
+      public double width;
+      public double height;
+      public double bitrate;
+
+      public VideoInputMetadata(final double width, final double height, final double bitrate) {
+          this.width = width;
+          this.height = height;
+          this.bitrate = bitrate;
+      }
+  }
 
 
 }

@@ -8,7 +8,6 @@ import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.streamkit.transcoding.model.TranscodingModel;
 import org.streamkit.transcoding.model.VideoOutput;
-import org.streamkit.transcoding.util.FFmpegOutput;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -38,10 +37,10 @@ public class TranscodeVideoTest {
     public void testExtractWidthHeightBitrate () {
         String ffmpegOutput = "Duration: 00:00:05.03, start: 0.000000, bitrate: 135 kb/s " +
                 "Stream #0:0(eng): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(tv), 640x480 [SAR 1:1 DAR 4:3], 28 kb/s, 30 fps, 30 tbr, 30k tbn, 60 tbc (default)";
-        FFmpegOutput fOut = transcodeVideo.extractWidthHeightBitrate(ffmpegOutput);
-        assertEquals(640, fOut.getWidth(), 0);
-        assertEquals(480, fOut.getHeight(), 0);
-        assertEquals(28d, fOut.getBitrate(), 0);
+        TranscodeVideo.VideoInputMetadata fOut = transcodeVideo.extractWidthHeightBitrate(ffmpegOutput);
+        assertEquals(640, fOut.width, 0);
+        assertEquals(480, fOut.height, 0);
+        assertEquals(28d, fOut.bitrate, 0);
     }
 
     @Test
@@ -49,18 +48,15 @@ public class TranscodeVideoTest {
         TranscodingModel model = new TranscodingModel();
         model.setSource(sourceVideoFile);
 
-        FFmpegOutput fOut = transcodeVideo.getFFmpegMediaParameters(model);
-        assertEquals(640, fOut.getWidth(), 0);
-        assertEquals(480, fOut.getHeight(), 0);
-        assertEquals(28, fOut.getBitrate(), 0);
+        TranscodeVideo.VideoInputMetadata fOut = transcodeVideo.getFFmpegMediaParameters(model);
+        assertEquals(640, fOut.width, 0);
+        assertEquals(480, fOut.height, 0);
+        assertEquals(28, fOut.bitrate, 0);
     }
 
     @Test
     public void testReduceConfigToVideoMetadata () {
-        FFmpegOutput fOut = new FFmpegOutput();
-        fOut.setBitrate(100);
-        fOut.setHeight(480);
-        fOut.setWidth(640);
+        TranscodeVideo.VideoInputMetadata fOut = new TranscodeVideo().newVideoInputMetadata(630D, 480D, 100D);
 
         TranscodingModel model = new TranscodingModel();
         model.setSource(sourceVideoFile);
