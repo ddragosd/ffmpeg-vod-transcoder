@@ -78,17 +78,19 @@ public class TranscodeVideo implements Step {
                 .append(reducedModel.getSource())
                 .append(" ")
                 .append(outputs.stream()
-                        .map(o -> String.format("-f mp4 -c:a copy -c:v %s -s %dx%d -x264opts bitrate=%d %s ",
-                                        o.getVideo_codec(), o.getWidth(), o.getHeight(), o.getBitrate(),
-                                        reducedModel.getDestination().getFile_name_template()
-                                                .replaceAll("\\$width", String.valueOf(o.getWidth()))
-                                                .replaceAll("\\$height", String.valueOf(o.getHeight()))
-                                                .replaceAll("\\$bitrate", String.valueOf(o.getBitrate()))
-                                                .replaceAll("\\$originalFileName", fileName) + ".mp4")
-                        ).reduce("", (a, b) -> a + b)
+                                .map(o -> String.format("-c:a %s -b:a %dk -c:v %s -s %dx%d -x264opts bitrate=%d %s ",
+                                                o.getAudio_codec(), o.getAudio_bitrate(), o.getVideo_codec(), o.getWidth(), o.getHeight(), o.getBitrate(),
+                                                reducedModel.getDestination().getFile_name_template()
+                                                        .replaceAll("\\$width", String.valueOf(o.getWidth()))
+                                                        .replaceAll("\\$height", String.valueOf(o.getHeight()))
+                                                        .replaceAll("\\$bitrate", String.valueOf(o.getBitrate()))
+                                                        .replaceAll("\\$originalFileName", fileName) + ".mp4")
+                                ).reduce("", (a, b) -> a + b)
                 );
         String[] commands = ffmpegCmdBuilder.toString().split(" ");
         // TODO: include trim
+        logger.info(String.format("Running FFMPEG command: \n %s \n", ffmpegCmdBuilder.toString()));
+
         // see: http://docs.oracle.com/javase/tutorial/collections/streams/parallelism.html
         ProcessBuilder pb = new ProcessBuilder(commands).inheritIO();
 //        pb.directory(new File("myDir"));
