@@ -90,4 +90,10 @@ public class TranscodeVideoTest {
         assertEquals("The video bitrate should be at most the input bitrate", 100, reducedModel.getSd_outputs().get(0).getBitrate());
         assertNull(reducedModel.getHd_outputs());
     }
+
+    @Test
+    public void testExtractFileName () {
+        String filePath = "http://www.stremakit.net/content/video.file-name(1).avi";
+        assertEquals("video.file-name(1)", transcodeVideo.extractFileName(filePath));
+    }
 }
