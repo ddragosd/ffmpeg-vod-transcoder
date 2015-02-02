@@ -22,6 +22,11 @@ import java.util.regex.Pattern;
 public class TranscodeVideo implements Step {
     private Logger logger = Logger.getLogger(ReadConfigJson.class.getName());
 
+    /**
+     * The location where the encoded files are written.
+     */
+    private static final String OUTPUT_LOCATION = "/tmp/streamkit/";
+
     @Override
     public String getName() {
         return "transcode-video";
@@ -80,7 +85,7 @@ public class TranscodeVideo implements Step {
                 .append(outputs.stream()
                                 .map(o -> String.format("-c:a %s -b:a %dk -c:v %s -s %dx%d -x264opts bitrate=%d %s ",
                                                 o.getAudio_codec(), o.getAudio_bitrate(), o.getVideo_codec(), o.getWidth(), o.getHeight(), o.getBitrate(),
-                                                reducedModel.getDestination().getFile_name_template()
+                                                OUTPUT_LOCATION + reducedModel.getDestination().getFile_name_template()
                                                         .replaceAll("\\$width", String.valueOf(o.getWidth()))
                                                         .replaceAll("\\$height", String.valueOf(o.getHeight()))
                                                         .replaceAll("\\$bitrate", String.valueOf(o.getBitrate()))
@@ -102,12 +107,18 @@ public class TranscodeVideo implements Step {
         Process p = null;
         try {
             p = pb.start();
+            p.waitFor();
+            int processExitValue = p.exitValue();
+            logger.info("FFMmpeg finished with exitValue=" + processExitValue);
+
 //            assert pb.redirectInput() == ProcessBuilder.Redirect.PIPE;
 ////            assert pb.redirectOutput().file() == log;
 //            assert pb.redirectOutput() == ProcessBuilder.Redirect.PIPE;
 //            assert p.getInputStream().read() == -1;
         } catch (IOException e) {
             throw new JobInterruptedException(e.getMessage());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
         return true;

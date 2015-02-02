@@ -33,9 +33,9 @@ public class ReadConfigJsonTest {
         assertEquals(3, transcodingModel.getHd_outputs().size());
     }
 
-    @Test
+    /*@Test
     public void getConfigJsonPropertyTest() {
         assertEquals(null, config.getConfigJsonProperty());
-    }
+    }*/
 
 }

@@ -16,19 +16,44 @@ import java.text.SimpleDateFormat;
  */
 @Configuration
 @EnableBatchProcessing
-public class MainTranscodingBatchJob  {
+public class MainTranscodingBatchJob {
     @Autowired
     private JobBuilderFactory jobs;
 
     @Bean
     public Job job() {
         return jobs.get("transcoding-job")
-                .start(new ReadConfigJson())
-                .next(new TranscodeVideo())
-                .next(new SnapshotVideo())
-                .next(new PersistVideoS3())
-                .listener(new TranscodingListener())
+                .start(getReadConfigJob())
+                .next(getTranscodeStep())
+                .next(getSnapshotStep())
+                .next(getPersistVideoStep())
+                .listener(getTranscodingListener())
                 .build();
+    }
+
+    @Bean
+    protected TranscodingListener getTranscodingListener() {
+        return new TranscodingListener();
+    }
+
+    @Bean
+    protected PersistVideoS3 getPersistVideoStep() {
+        return new PersistVideoS3();
+    }
+
+    @Bean
+    protected SnapshotVideo getSnapshotStep() {
+        return new SnapshotVideo();
+    }
+
+    @Bean
+    protected ReadConfigJson getReadConfigJob() {
+        return new ReadConfigJson();
+    }
+
+    @Bean
+    protected TranscodeVideo getTranscodeStep() {
+        return new TranscodeVideo();
     }
 
 }

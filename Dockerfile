@@ -27,7 +27,7 @@ RUN ln -sf /dev/stdout /var/log/streamkit/*
 VOLUME /var/log/streamkit/
 
 # dir to write the transcoding output into
-VOLUME /var/transcoder/streamkit
+VOLUME /tmp/streamkit
 
 COPY ./target/transcoding-job-0.0.1-SNAPSHOT.jar /usr/local/vod-transcoder/vod-transcoder.jar
 

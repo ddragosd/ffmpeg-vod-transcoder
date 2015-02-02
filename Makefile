@@ -12,8 +12,9 @@ docker:
 
 .PHONY: docker-ssh
 docker-ssh:
-	docker run -ti --entrypoint='bash' streamkit/ffmpeg-vod-transcoder:latest
+	docker run --rm=true --volume=/tmp/streamkit:/tmp/streamkit -ti --entrypoint='bash' streamkit/ffmpeg-vod-transcoder:latest
 
 .PHONY: docker-run
 docker-run:
-	docker run streamkit/ffmpeg-vod-transcoder:latest ${DOCKER_ARGS}
+	mkdir -p ~/tmp/streamkit
+	docker run --rm=true --volume=${HOME}/tmp/streamkit:/tmp/streamkit streamkit/ffmpeg-vod-transcoder:latest ${DOCKER_ARGS}

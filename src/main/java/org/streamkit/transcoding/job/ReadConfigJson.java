@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Component;
 import org.streamkit.transcoding.model.TranscodingModel;
 
 import java.io.BufferedReader;
@@ -23,10 +24,13 @@ import java.util.logging.Logger;
 /**
  * Created by ddascal on 22/01/15.
  */
-@Configuration
+@Component
 public class ReadConfigJson implements Step {
     private Logger logger = Logger.getLogger(ReadConfigJson.class.getName());
     private final static String DEFAULT_JSON_PATH = "/default_config.json";
+
+    @Value("${configJson:#{null}}")
+    private String configJson;
 
     @Autowired
     private Environment env;
@@ -80,9 +84,10 @@ public class ReadConfigJson implements Step {
     }
 
     protected String getConfigJsonProperty() {
-        if (env != null) {
-            return env.getProperty("configJson");
+        if (this.configJson != null) {
+            return this.configJson;
         }
+        logger.warning("configJson not found ... ");
         return "{}";
     }
 
