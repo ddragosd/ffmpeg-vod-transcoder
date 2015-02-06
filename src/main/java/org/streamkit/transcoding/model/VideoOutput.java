@@ -4,20 +4,12 @@ package org.streamkit.transcoding.model;
  * Created by ddascal on 22/01/15.
  */
 public class VideoOutput {
-    private int width;
     private int height;
-    private int bitrate;
-    private String audio_codec;
-    private int audio_bitrate;
+    private int video_bitrate;
     private String video_codec;
+    private int audio_bitrate;
+    private String audio_codec;
 
-    public int getWidth() {
-        return width;
-    }
-
-    public void setWidth(int width) {
-        this.width = width;
-    }
 
     public int getHeight() {
         return height;
@@ -27,12 +19,12 @@ public class VideoOutput {
         this.height = height;
     }
 
-    public int getBitrate() {
-        return bitrate;
+    public int getVideo_bitrate() {
+        return video_bitrate;
     }
 
-    public void setBitrate(int bitrate) {
-        this.bitrate = bitrate;
+    public void setVideo_bitrate(int video_bitrate) {
+        this.video_bitrate = video_bitrate;
     }
 
     public String getAudio_codec() {

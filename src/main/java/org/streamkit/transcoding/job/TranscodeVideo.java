@@ -75,7 +75,7 @@ public class TranscodeVideo implements Step {
             e.printStackTrace();
         }
 
-        List<VideoOutput> outputs = reducedModel.getHd_outputs() != null ? reducedModel.getHd_outputs() : reducedModel.getSd_outputs();
+        List<VideoOutput> outputs = reducedModel.getOutputs() != null ? reducedModel.getOutputs() : reducedModel.getOutputs();
 
         String fileName = this.extractFileName(reducedModel.getSource());
         StringBuilder ffmpegCmdBuilder = new StringBuilder();
@@ -84,11 +84,11 @@ public class TranscodeVideo implements Step {
                 .append(" ")
                 .append(outputs.stream()
                                 .map(o -> String.format("-c:a %s -b:a %dk -c:v %s -s %dx%d -x264opts bitrate=%d %s ",
-                                                o.getAudio_codec(), o.getAudio_bitrate(), o.getVideo_codec(), o.getWidth(), o.getHeight(), o.getBitrate(),
+                                                o.getAudio_codec(), o.getAudio_bitrate(), o.getVideo_codec(), -2, o.getHeight(), o.getVideo_bitrate(),
                                                 OUTPUT_LOCATION + reducedModel.getDestination().getFile_name_template()
-                                                        .replaceAll("\\$width", String.valueOf(o.getWidth()))
+                                                        .replaceAll("\\$width", "-2")
                                                         .replaceAll("\\$height", String.valueOf(o.getHeight()))
-                                                        .replaceAll("\\$bitrate", String.valueOf(o.getBitrate()))
+                                                        .replaceAll("\\$bitrate", String.valueOf(o.getVideo_bitrate()))
                                                         .replaceAll("\\$originalFileName", fileName) + ".mp4")
                                 ).reduce("", (a, b) -> a + b)
                 );
@@ -137,13 +137,13 @@ public class TranscodeVideo implements Step {
                 stringBuilder.append(System.getProperty("line.separator"));
             }
             String ffmpegOutput = stringBuilder.toString();
-            VideoInputMetadata fOut = extractWidthHeightBitrate(ffmpegOutput);
+            VideoInputMetadata videoMetadata = extractWidthHeightBitrate(ffmpegOutput);
             logger.info(String.format("Video Info:\n%s\n\n", ffmpegOutput));
-            if (fOut == null) {
+            if (videoMetadata == null) {
                 throw new JobInterruptedException("Could not read video info.");
             }
 
-            return fOut;
+            return videoMetadata;
 
         } catch (IOException e) {
             throw new JobInterruptedException(e.getMessage());
@@ -151,56 +151,89 @@ public class TranscodeVideo implements Step {
     }
 
 
-    protected TranscodingModel reduceConfigToVideoMetadata(VideoInputMetadata fOut, TranscodingModel model) {
+    protected TranscodingModel reduceConfigToVideoMetadata(VideoInputMetadata videoMetadata, TranscodingModel model) {
 
-        //1. determine if this is an HD stream or not by the ratio
-        boolean isHD = fOut.width / fOut.height >= 1.60D;
-        logger.info(String.format("Width=%.2f, Height=%.2f, Bitrate=%.2f, HD=%b",
-                fOut.width, fOut.height, fOut.bitrate, isHD));
+        //determine video parameters
+        logger.info(String.format("Height=%.2f, Bitrate=%.2f", videoMetadata.height, videoMetadata.video_bitrate));
 
-        //2. reduce the config to the size of the video, stripping the high qualities
-        if (isHD) {
-            List<VideoOutput> filteredOutputsList = filterVideoOutputList(model.getHd_outputs(), fOut);
-            model.setHd_outputs(filteredOutputsList);
-            model.setSd_outputs(null);
-        } else {
-            List<VideoOutput> filteredOutputsList = filterVideoOutputList(model.getSd_outputs(), fOut);
-            model.setHd_outputs(null);
-            model.setSd_outputs(filteredOutputsList);
-        }
+        //reduce the config to the size of the video, stripping the high qualities
+        List<VideoOutput> filteredOutputsList = filterVideoOutputList(model.getOutputs(), videoMetadata);
+        model.setOutputs(filteredOutputsList);
+
         return model;
     }
 
     protected List<VideoOutput> filterVideoOutputList(List<VideoOutput> outputs, VideoInputMetadata metadata) {
-        VideoOutput[] filteredOutputs = outputs
+        // List for the config list ordered from highest to lowest
+        VideoOutput[] orderedOutput = outputs
                 .stream()
-                .filter(o -> o.getWidth() <= metadata.width)
                 .sorted((v1, v2) -> {
-                    if (v1.getBitrate() < v2.getBitrate()) {
+                    if (v1.getVideo_bitrate() < v2.getVideo_bitrate()) {
                         return 1;
                     }
-                    if (v1.getBitrate() > v2.getBitrate()) {
+                    if (v1.getVideo_bitrate() > v2.getVideo_bitrate()) {
                         return -1;
                     }
 
                     return 0;
                 })
                 .toArray(VideoOutput[]::new);
-        if (filteredOutputs[0].getBitrate() > metadata.bitrate) {
-            filteredOutputs[0].setBitrate((int) metadata.bitrate);
+
+        // List for the filtered by resolution and bitrate from highest to lowest
+        VideoOutput[] filteredOutputs = outputs
+                .stream()
+                .filter(o -> o.getHeight() <= metadata.height && o.getVideo_bitrate() <= metadata.video_bitrate)
+                .sorted((v1, v2) -> {
+                    if (v1.getVideo_bitrate() < v2.getVideo_bitrate()) {
+                        return 1;
+                    }
+                    if (v1.getVideo_bitrate() > v2.getVideo_bitrate()) {
+                        return -1;
+                    }
+
+                    return 0;
+                })
+                .toArray(VideoOutput[]::new);
+
+        // Highest video_bitrate should have default input value or the max value from configuration
+        if (metadata.video_bitrate < orderedOutput[0].getVideo_bitrate()) {
+            filteredOutputs[0].setVideo_bitrate((int) metadata.video_bitrate);
+        } else {
+            filteredOutputs[0].setVideo_bitrate(orderedOutput[0].getVideo_bitrate());
         }
+
+        // Highest audio_bitrate should have default input value or the max value from configuration
+        if (metadata.audio_bitrate < orderedOutput[0].getAudio_bitrate()) {
+            filteredOutputs[0].setAudio_bitrate((int) metadata.audio_bitrate);
+        } else {
+            filteredOutputs[0].setAudio_bitrate(orderedOutput[0].getAudio_bitrate());
+        }
+
+        // Resolution should always have the input value for the highest quality
+        if (filteredOutputs[0].getHeight() < metadata.height) {
+            filteredOutputs[0].setHeight((int) metadata.height);
+        }
+
         List<VideoOutput> filteredOutputsList = new ArrayList(Arrays.asList(filteredOutputs));
 
         return filteredOutputsList;
     }
 
     protected VideoInputMetadata extractWidthHeightBitrate(String ffmpegOutput) {
-        Pattern p = Pattern.compile("^.*Stream.*Video.*\\s(?<width>\\d+)x(?<height>\\d+).*\\s(?<bitrate>\\d+)\\skb\\/s.*$", Pattern.MULTILINE);
-        Matcher m = p.matcher(ffmpegOutput);
-        if (m.find()) {
-            return new VideoInputMetadata(Double.valueOf(m.group("width")), Double.valueOf(m.group("height")), Double.valueOf(m.group("bitrate")));
+        Pattern pVideo = Pattern.compile("^.*Stream.*Video.*\\s(?<width>\\d+)x(?<height>\\d+).*\\s(?<videobitrate>\\d+)\\skb\\/s.*$", Pattern.MULTILINE);
+        Pattern pAudio = Pattern.compile("^.*Stream.*Audio.*\\s(?<audiobitrate>\\d+)\\skb\\/s.*$", Pattern.MULTILINE);
+
+        VideoInputMetadata metadata = new VideoInputMetadata();
+        Matcher mVideo = pVideo.matcher(ffmpegOutput);
+        if (mVideo.find()) {
+            metadata.setHeight(Double.valueOf(mVideo.group("height")));
+            metadata.setVideo_bitrate(Double.valueOf(mVideo.group("videobitrate")));
         }
-        return null;
+        Matcher mAudio = pAudio.matcher(ffmpegOutput);
+        if (mAudio.find()) {
+            metadata.setAudio_bitrate(Double.valueOf(mAudio.group("audiobitrate")));
+        }
+        return metadata;
     }
 
     protected String extractFileName(String sourceURl) {
@@ -213,14 +246,29 @@ public class TranscodeVideo implements Step {
     }
 
     protected class VideoInputMetadata {
-        public double width;
         public double height;
-        public double bitrate;
+        public double video_bitrate;
+        public double audio_bitrate;
 
-        public VideoInputMetadata(final double width, final double height, final double bitrate) {
-            this.width = width;
+        public VideoInputMetadata() {
+        }
+
+        public VideoInputMetadata(double height, double video_bitrate, double audio_bitrate) {
             this.height = height;
-            this.bitrate = bitrate;
+            this.video_bitrate = video_bitrate;
+            this.audio_bitrate = audio_bitrate;
+        }
+
+        public void setHeight(double height) {
+            this.height = height;
+        }
+
+        public void setVideo_bitrate(double video_bitrate) {
+            this.video_bitrate = video_bitrate;
+        }
+
+        public void setAudio_bitrate(double audio_bitrate) {
+            this.audio_bitrate = audio_bitrate;
         }
     }
 

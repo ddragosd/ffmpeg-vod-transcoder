@@ -4,56 +4,27 @@
     "start": 0,
     "end": 0
   },
-  "sd_outputs": [
+  "outputs": [
     {
-      "width": 1440,
       "height": 1080,
-      "bitrate": 2200,
-      "audio_codec": "libfdk_aac",
+      "video_bitrate": 2200,
+      "video_codec": "libx264",
       "audio_bitrate": 128,
-      "video_codec": "libx264"
+      "audio_codec": "libfdk_aac"
     },
     {
-      "width": 640,
       "height": 480,
-      "bitrate": 600,
-      "audio_codec": "libfdk_aac",
+      "video_bitrate": 600,
+      "video_codec": "libx264",
       "audio_bitrate": 96,
-      "video_codec": "libx264"
+      "audio_codec": "libfdk_aac"
     },
     {
-      "width": 214,
-      "height": 160,
-      "bitrate": 10,
-      "audio_codec": "libfdk_aac",
+      "height": 144,
+      "video_bitrate": 10,
+      "video_codec": "libx264",
       "audio_bitrate": 48,
-      "video_codec": "libx264"
-    }
-  ],
-  "hd_outputs": [
-    {
-      "width": 1920,
-      "height": 1080,
-      "bitrate": 2200,
-      "audio_codec": "libfdk_aac",
-      "audio_bitrate": 128,
-      "video_codec": "libx264"
-    },
-    {
-      "width": 854,
-      "height": 480,
-      "bitrate": 600,
-      "audio_codec": "libfdk_aac",
-      "audio_bitrate": 96,
-      "video_codec": "libx264"
-    },
-    {
-      "width": 284,
-      "height": 160,
-      "bitrate": 10,
-      "audio_codec": "libfdk_aac",
-      "audio_bitrate": 48,
-      "video_codec": "libx264"
+      "audio_codec": "libfdk_aac"
     }
   ],
   "snapshot_at": "00:00:00",

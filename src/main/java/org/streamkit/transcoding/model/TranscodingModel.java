@@ -11,14 +11,11 @@ public class TranscodingModel {
      * The file to be encoded: a file path or a URL
      */
     private String source;
-    private List<VideoOutput> sd_outputs = new ArrayList<>();
-    private List<VideoOutput> hd_outputs = new ArrayList<>();
+    private VideoTrim trim;
+    private List<VideoOutput> outputs = new ArrayList<>();
     private String snapshot_at;
-
     private String callback_url;
     private VideoDestination destination;
-
-    private VideoTrim trim;
 
     public String getSource() {
         return source;
@@ -36,20 +33,12 @@ public class TranscodingModel {
         this.trim = trim;
     }
 
-    public List<VideoOutput> getSd_outputs() {
-        return sd_outputs;
+    public List<VideoOutput> getOutputs() {
+        return outputs;
     }
 
-    public void setSd_outputs(List<VideoOutput> sd_outputs) {
-        this.sd_outputs = sd_outputs;
-    }
-
-    public List<VideoOutput> getHd_outputs() {
-        return hd_outputs;
-    }
-
-    public void setHd_outputs(List<VideoOutput> hd_outputs) {
-        this.hd_outputs = hd_outputs;
+    public void setOutputs(List<VideoOutput> outputs) {
+        this.outputs = outputs;
     }
 
     public String getSnapshot_at() {

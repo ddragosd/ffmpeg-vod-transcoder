@@ -7,11 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.streamkit.transcoding.model.TranscodingModel;
-import org.streamkit.transcoding.model.VideoOutput;
-
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -39,11 +34,12 @@ public class TranscodeVideoTest {
     @Test
     public void testExtractWidthHeightBitrate () {
         String ffmpegOutput = "Duration: 00:00:05.03, start: 0.000000, bitrate: 135 kb/s " +
-                "Stream #0:0(eng): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(tv), 640x480 [SAR 1:1 DAR 4:3], 28 kb/s, 30 fps, 30 tbr, 30k tbn, 60 tbc (default)";
-        TranscodeVideo.VideoInputMetadata fOut = transcodeVideo.extractWidthHeightBitrate(ffmpegOutput);
-        assertEquals(640, fOut.width, 0);
-        assertEquals(480, fOut.height, 0);
-        assertEquals(28d, fOut.bitrate, 0);
+                "Stream #0:0: Video: vp6f, yuv420p, 720x480, 1638 kb/s, 30 fps, 30 tbr, 1k tbn, 1k tbc \n" +
+                "Stream #0:1: Audio: mp3, 44100 Hz, stereo, s16p, 262 kb/s";
+        TranscodeVideo.VideoInputMetadata videoMetadata = transcodeVideo.extractWidthHeightBitrate(ffmpegOutput);
+        assertEquals(480, videoMetadata.height, 0);
+        assertEquals(1638, videoMetadata.video_bitrate, 0);
+        assertEquals(262, videoMetadata.audio_bitrate, 0);
     }
 
     @Test
@@ -51,44 +47,95 @@ public class TranscodeVideoTest {
         TranscodingModel model = new TranscodingModel();
         model.setSource(sourceVideoFile);
 
-        TranscodeVideo.VideoInputMetadata fOut = transcodeVideo.getFFmpegMediaParameters(model);
-        assertEquals(720, fOut.width, 0);
-        assertEquals(480, fOut.height, 0);
-        assertEquals(1638, fOut.bitrate, 0);
+        TranscodeVideo.VideoInputMetadata videoMetadata = transcodeVideo.getFFmpegMediaParameters(model);
+        assertEquals(480, videoMetadata.height, 0);
+        assertEquals(1638, videoMetadata.video_bitrate, 0);
+        assertEquals(262, videoMetadata.audio_bitrate, 0);
     }
 
     @Test
-    public void testReduceConfigToVideoMetadata () {
-        TranscodeVideo.VideoInputMetadata fOut = new TranscodeVideo().new VideoInputMetadata(640, 480, 100);
+    public void testReduceConfigToVideoMetadata_1 () throws JobInterruptedException {
+        TranscodingModel model = config.getTranscodingModel("{\"source\":\"" + sourceVideoFile + "\"}");
+        assertEquals(3, model.getOutputs().size());
 
-        TranscodingModel model = new TranscodingModel();
-        model.setSource(sourceVideoFile);
+        TranscodeVideo.VideoInputMetadata videoMetadata = new TranscodeVideo().new VideoInputMetadata();
+        videoMetadata.setHeight(355);
+        videoMetadata.setVideo_bitrate(100);
+        videoMetadata.setAudio_bitrate(86);
 
-        VideoOutput sdOut1 = new VideoOutput();
-        sdOut1.setBitrate(64);
-        sdOut1.setWidth(320);
-        sdOut1.setHeight(200);
-        VideoOutput sdOut2 = new VideoOutput();
-        sdOut2.setBitrate(350);
-        sdOut2.setWidth(640);
-        sdOut2.setHeight(480);
-        VideoOutput sdOut3 = new VideoOutput();
-        sdOut3.setBitrate(800);
-        sdOut3.setWidth(720);
-        sdOut3.setHeight(575);
+        TranscodingModel reducedModel = transcodeVideo.reduceConfigToVideoMetadata(videoMetadata, model);
+        assertEquals(1, reducedModel.getOutputs().size());
 
-        List<VideoOutput> sdOutList = new ArrayList<>();
-        sdOutList.add(sdOut1);
-        sdOutList.add(sdOut2);
-        sdOutList.add(sdOut3);
+        assertEquals(355, reducedModel.getOutputs().get(0).getHeight());
+        assertEquals(100, reducedModel.getOutputs().get(0).getVideo_bitrate());
+        assertEquals(86, reducedModel.getOutputs().get(0).getAudio_bitrate());
+    }
 
-        model.setSd_outputs(sdOutList);
-        assertEquals(3, model.getSd_outputs().size());
+    @Test
+    public void testReduceConfigToVideoMetadata_2 () throws JobInterruptedException {
+        TranscodingModel model = config.getTranscodingModel("{\"source\":\"" + sourceVideoFile + "\"}");
+        assertEquals(3, model.getOutputs().size());
 
-        TranscodingModel reducedModel = transcodeVideo.reduceConfigToVideoMetadata(fOut, model);
-        assertEquals(2, reducedModel.getSd_outputs().size());
-        assertEquals("The video bitrate should be at most the input bitrate", 100, reducedModel.getSd_outputs().get(0).getBitrate());
-        assertNull(reducedModel.getHd_outputs());
+        TranscodeVideo.VideoInputMetadata videoMetadata = new TranscodeVideo().new VideoInputMetadata();
+        videoMetadata.setHeight(1980);
+        videoMetadata.setVideo_bitrate(4000);
+        videoMetadata.setAudio_bitrate(256);
+
+        TranscodingModel reducedModel = transcodeVideo.reduceConfigToVideoMetadata(videoMetadata, model);
+        assertEquals(3, reducedModel.getOutputs().size());
+
+        assertEquals(1980, reducedModel.getOutputs().get(0).getHeight());
+        assertEquals(2200, reducedModel.getOutputs().get(0).getVideo_bitrate());
+        assertEquals(128, reducedModel.getOutputs().get(0).getAudio_bitrate());
+
+        assertEquals(480, reducedModel.getOutputs().get(1).getHeight());
+        assertEquals(600, reducedModel.getOutputs().get(1).getVideo_bitrate());
+        assertEquals(96, reducedModel.getOutputs().get(1).getAudio_bitrate());
+
+        assertEquals(144, reducedModel.getOutputs().get(2).getHeight());
+        assertEquals(10, reducedModel.getOutputs().get(2).getVideo_bitrate());
+        assertEquals(48, reducedModel.getOutputs().get(2).getAudio_bitrate());
+    }
+
+    @Test
+    public void testReduceConfigToVideoMetadata_3 () throws JobInterruptedException {
+        TranscodingModel model = config.getTranscodingModel("{\"source\":\"" + sourceVideoFile + "\"}");
+        assertEquals(3, model.getOutputs().size());
+
+        TranscodeVideo.VideoInputMetadata videoMetadata = new TranscodeVideo().new VideoInputMetadata();
+        videoMetadata.setHeight(900);
+        videoMetadata.setVideo_bitrate(4000);
+        videoMetadata.setAudio_bitrate(256);
+
+        TranscodingModel reducedModel = transcodeVideo.reduceConfigToVideoMetadata(videoMetadata, model);
+        assertEquals(2, reducedModel.getOutputs().size());
+
+        assertEquals(900, reducedModel.getOutputs().get(0).getHeight());
+        assertEquals(2200, reducedModel.getOutputs().get(0).getVideo_bitrate());
+        assertEquals(128, reducedModel.getOutputs().get(0).getAudio_bitrate());
+
+        assertEquals(144, reducedModel.getOutputs().get(1).getHeight());
+        assertEquals(10, reducedModel.getOutputs().get(1).getVideo_bitrate());
+        assertEquals(48, reducedModel.getOutputs().get(1).getAudio_bitrate());
+    }
+
+    @Test
+    public void testReduceConfigToVideoMetadata_4 () throws JobInterruptedException {
+        TranscodingModel model = config.getTranscodingModel("{\"source\":\"" + sourceVideoFile + "\"}");
+        assertEquals(3, model.getOutputs().size());
+
+        TranscodeVideo.VideoInputMetadata videoMetadata = new TranscodeVideo().new VideoInputMetadata();
+        videoMetadata.setHeight(300);
+        videoMetadata.setVideo_bitrate(4000);
+        videoMetadata.setAudio_bitrate(256);
+
+        TranscodingModel reducedModel = transcodeVideo.reduceConfigToVideoMetadata(videoMetadata, model);
+        assertEquals(1, reducedModel.getOutputs().size());
+
+        assertEquals(300, reducedModel.getOutputs().get(0).getHeight());
+        assertEquals(2200, reducedModel.getOutputs().get(0).getVideo_bitrate());
+        assertEquals(128, reducedModel.getOutputs().get(0).getAudio_bitrate());
+
     }
 
     @Test
