@@ -83,7 +83,7 @@ public class TranscodeVideo implements Step {
                 .append(reducedModel.getSource())
                 .append(" ")
                 .append(outputs.stream()
-                                .map(o -> String.format("-c:a %s -b:a %dk -c:v %s -s %dx%d -x264opts bitrate=%d %s ",
+                                .map(o -> String.format("-c:a %s -b:a %dk -c:v %s -vf scale=%d:%d -x264opts bitrate=%d %s ",
                                                 o.getAudio_codec(), o.getAudio_bitrate(), o.getVideo_codec(), -2, o.getHeight(), o.getVideo_bitrate(),
                                                 OUTPUT_LOCATION + reducedModel.getDestination().getFile_name_template()
                                                         .replaceAll("\\$width", "-2")

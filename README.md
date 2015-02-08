@@ -26,5 +26,9 @@ To pass extra parameters to the docker container, use `DOCKER_ARGS`:
     make docker-run DOCKER_ARGS="--configJson='{\"source\":\"http://techslides.com/demos/sample-videos/small.mp4\"}'"
 ```
 
+```
+    make docker-run DOCKER_ARGS="--configJson='{\"source\":\"http://s3.footagesearch.com/demos/naturefootage/Q4/OF-04-Fish-Demo-Q4.mp4\"}'"
+```
+
 The result of the encoding is saved into your home folder, under `~/tmp/streamkit/`.
 To test with the same input file multiple times you might need to clean this directory; ffmpeg will not overwrite any files.
