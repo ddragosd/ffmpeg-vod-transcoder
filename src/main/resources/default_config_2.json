@@ -1,0 +1,33 @@
+{
+  "source":"http://s3.footagesearch.com/demos/naturefootage/Q4/OF-04-Fish-Demo-Q4.mp4",
+  "outputs": [
+    {
+      "height": 1080,
+      "video_bitrate": 2200,
+      "video_codec": "libx264",
+      "audio_bitrate": 128,
+      "audio_codec": "libfdk_aac"
+    },
+    {
+      "height": 720,
+      "video_bitrate": 1100,
+      "video_codec": "libx264",
+      "audio_bitrate": 128,
+      "audio_codec": "libfdk_aac"
+    },
+    {
+      "height": 480,
+      "video_bitrate": 600,
+      "video_codec": "libx264",
+      "audio_bitrate": 96,
+      "audio_codec": "libfdk_aac"
+    },
+    {
+      "height": 144,
+      "video_bitrate": 10,
+      "video_codec": "libx264",
+      "audio_bitrate": 48,
+      "audio_codec": "libfdk_aac"
+    }
+  ]
+}
