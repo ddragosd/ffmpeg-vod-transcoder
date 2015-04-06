@@ -11,6 +11,12 @@
 	<name>ffmpeg-vod-transcoder</name>
 	<description>Vod Transcoding with Spring Boot</description>
 
+	<scm>
+		<connection>scm:git:git@github.com:streamkit/ffmpeg-vod-transcoder.git</connection>
+		<url>scm:git:git@github.com:streamkit/ffmpeg-vod-transcoder.git</url>
+		<developerConnection>scm:git:git@github.com:streamkit/ffmpeg-vod-transcoder.git</developerConnection>
+	</scm>
+
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
@@ -56,6 +62,27 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<!-- Maven Release with GitHub only -->
+			<plugin>
+				<groupId>de.jutzig</groupId>
+				<artifactId>github-release-plugin</artifactId>
+				<version>1.1.0</version>
+				<executions>
+					<execution>
+						<id>github-upload</id>
+						<phase>deploy</phase>
+						<goals>
+							<goal>release</goal>
+						</goals>
+						<inherited>false</inherited>
+						<configuration>
+							<releaseName>${project.artifactId}-${project.version}</releaseName>
+							<tag>${project.version}</tag>
+							<artifact>${project.build.directory}/${project.groupId}.${project.artifactId}-${project.version}.jar</artifact>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
