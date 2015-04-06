@@ -5,7 +5,7 @@
 
 	<groupId>org.streamkit.microservice</groupId>
 	<artifactId>transcoding-job</artifactId>
-	<version>0.0.4-SNAPSHOT</version>
+	<version>0.0.5-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>ffmpeg-vod-transcoder</name>
@@ -81,7 +81,7 @@
 						<configuration>
 							<releaseName>${project.artifactId}-${project.version}</releaseName>
 							<tag>${project.version}</tag>
-							<artifact>${project.build.directory}/${project.groupId}.${project.artifactId}-${project.version}.jar</artifact>
+							<artifact>${project.build.directory}/${project.artifactId}-${project.version}.jar</artifact>
 						</configuration>
 					</execution>
 				</executions>
