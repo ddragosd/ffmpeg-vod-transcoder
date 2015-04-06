@@ -5,7 +5,7 @@
 
 	<groupId>org.streamkit.microservice</groupId>
 	<artifactId>transcoding-job</artifactId>
-	<version>0.0.3-SNAPSHOT</version>
+	<version>0.0.4-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>ffmpeg-vod-transcoder</name>
@@ -29,6 +29,7 @@
 		<start-class>org.streamkit.transcoding.VodTranscodingApplication</start-class>
 		<java.version>1.8</java.version>
 		<maven.javadoc.skip>true</maven.javadoc.skip>
+		<maven.deploy.skip>true</maven.deploy.skip>
 	</properties>
 
 	<dependencies>
