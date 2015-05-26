@@ -1,6 +1,13 @@
 # ffmpeg-vod-transcoder
 A micro-service with Springboot and Docker used to transcode a single video file in multiple formats, in the cloud.
 
+## Running the transcoding job manually
+
+```
+docker run --rm=true --volume=${HOME}/tmp/streamkit:/tmp/streamkit \
+    ddragosd/ffmpeg-vod-transcoder:latest --configJson={\"source\":\"http://s3.footagesearch.com/demos/naturefootage/Q4/OF-04-Fish-Demo-Q4.mp4\"}
+```
+
 ### Running the transcoding job in Chronos
 This microservice is built to be executed once for every file that needs to be transcoded.
 [Chronos](https://github.com/mesos/chronos) is a nice way to schedule jobs if you're using Mesos. Chronos is a fault tolerant distributed scheduler for jobs that includes ISO8601 support and dependency based job scheduling.
@@ -9,19 +16,19 @@ To start a job in Chronos make a `POST` request to `http://<master>:4400/schedul
  
 ```javascript
 { 
- "schedule": "1\//",
- "name": "transcoding-job-01",
+ "schedule": "R1//PT2M",
+ "name": "transcoding-sample-footage",
  "container": {
    "type": "DOCKER",
    "image": "ddragosd/ffmpeg-vod-transcoder:latest",
    "network":"BRIDGE"
  },
+ "command": "java -jar /usr/local/vod-transcoder/vod-transcoder.jar --configJson={\\\"source\\\":\\\"http://s3.footagesearch.com/demos/naturefootage/Q4/OF-04-Fish-Demo-Q4.mp4\\\"}",
  "cpus": "3",
- "mem": "2048",
- "uris": [],
- "arguments": "--configJson={\"source\":\"http://s3.footagesearch.com/demos/naturefootage/Q4/OF-04-Fish-Demo-Q4.mp4\"}"
+ "mem": "1536"
 }
 ```
+The current command was tested with Chronos `2.3.3` framework and Mesos `0.22.0`.
 
 ### Developer guide
 
