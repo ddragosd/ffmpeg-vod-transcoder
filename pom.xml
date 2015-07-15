@@ -1,27 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>org.streamkit.microservice</groupId>
 	<artifactId>transcoding-job</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.6-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>ffmpeg-vod-transcoder</name>
 	<description>Vod Transcoding with Spring Boot</description>
 
+	<scm>
+		<connection>scm:git:git@github.com:streamkit/ffmpeg-vod-transcoder.git</connection>
+		<url>scm:git:git@github.com:streamkit/ffmpeg-vod-transcoder.git</url>
+		<developerConnection>scm:git:git@github.com:streamkit/ffmpeg-vod-transcoder.git</developerConnection>
+	  <tag>HEAD</tag>
+  </scm>
+
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>1.2.1.RELEASE</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<start-class>org.streamkit.transcoding.VodTranscodingApplication</start-class>
 		<java.version>1.8</java.version>
+		<maven.javadoc.skip>true</maven.javadoc.skip>
+		<maven.deploy.skip>true</maven.deploy.skip>
 	</properties>
 
 	<dependencies>
@@ -66,6 +74,27 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<!-- Maven Release with GitHub only -->
+			<plugin>
+				<groupId>de.jutzig</groupId>
+				<artifactId>github-release-plugin</artifactId>
+				<version>1.1.0</version>
+				<executions>
+					<execution>
+						<id>github-upload</id>
+						<phase>deploy</phase>
+						<goals>
+							<goal>release</goal>
+						</goals>
+						<inherited>false</inherited>
+						<configuration>
+							<releaseName>${project.artifactId}-${project.version}</releaseName>
+							<tag>${project.version}</tag>
+							<artifact>${project.build.directory}/${project.artifactId}-${project.version}.jar</artifact>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

@@ -60,11 +60,14 @@ public class TranscodeVideo implements Step {
     /**
      * Starts a new FFmpeg Process as a separate process, not a separate thread and waits for the process to finish
      * before returning the result.
-     * <p/>
-     * FFmpeg output needs to be sent to the log console to be captured along with the other logs
      *
-     * @return
-     * @link http://docs.oracle.com/javase/7/docs/api/java/lang/ProcessBuilder.html
+     * FFmpeg output needs to be sent to the log console to be captured along with the other logs.
+     *
+     * To learn more about how the process is started see http://docs.oracle.com/javase/7/docs/api/java/lang/ProcessBuilder.html.
+     *
+     * @param reducedModel TranscodingModel
+     * @return true if transcode is successfull, false otherwise
+     * @throws JobInterruptedException
      */
     protected Boolean transcode(TranscodingModel reducedModel) throws JobInterruptedException {
 
@@ -83,7 +86,7 @@ public class TranscodeVideo implements Step {
                 .append(reducedModel.getSource())
                 .append(" ")
                 .append(outputs.stream()
-                                .map(o -> String.format("-c:a %s -b:a %dk -c:v %s -s %dx%d -x264opts bitrate=%d %s ",
+                                .map(o -> String.format("-c:a %s -b:a %dk -c:v %s -vf scale=%d:%d -x264opts bitrate=%d %s ",
                                                 o.getAudio_codec(), o.getAudio_bitrate(), o.getVideo_codec(), -2, o.getHeight(), o.getVideo_bitrate(),
                                                 OUTPUT_LOCATION + reducedModel.getDestination().getFile_name_template()
                                                         .replaceAll("\\$width", "-2")
