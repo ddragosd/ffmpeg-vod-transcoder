@@ -8,6 +8,11 @@ import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.integration.annotation.IntegrationComponentScan;
+import org.springframework.integration.channel.QueueChannel;
+import org.springframework.integration.config.EnableIntegration;
+import org.springframework.integration.ftp.session.DefaultFtpSessionFactory;
+import org.springframework.messaging.PollableChannel;
 
 import java.text.SimpleDateFormat;
 
@@ -27,6 +32,7 @@ public class MainTranscodingBatchJob {
                 .next(getTranscodeStep())
                 .next(getSnapshotStep())
                 .next(getPersistVideoStep())
+                .next(getPersistVideoFtpStep())
                 .listener(getTranscodingListener())
                 .build();
     }
@@ -42,6 +48,11 @@ public class MainTranscodingBatchJob {
     }
 
     @Bean
+    protected PersistVideoFTP getPersistVideoFtpStep() {
+        return new PersistVideoFTP();
+    }
+
+    @Bean
     protected SnapshotVideo getSnapshotStep() {
         return new SnapshotVideo();
     }
@@ -54,6 +65,11 @@ public class MainTranscodingBatchJob {
     @Bean
     protected TranscodeVideo getTranscodeStep() {
         return new TranscodeVideo();
+    }
+
+    @Bean
+    public PollableChannel remoteFileOutputChannel() {
+        return new QueueChannel();
     }
 
 }
