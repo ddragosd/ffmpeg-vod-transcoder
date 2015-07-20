@@ -51,6 +51,7 @@ public class TranscodeVideo implements Step {
         TranscodingModel reducedModel = this.reduceConfigToVideoMetadata(inputMeta, model);
 
         if (transcode(reducedModel)) {
+            stepExecution.getJobExecution().getExecutionContext().put("output_local_folder", OUTPUT_LOCATION);
             stepExecution.setStatus(BatchStatus.COMPLETED);
         } else {
             stepExecution.setStatus(BatchStatus.FAILED);

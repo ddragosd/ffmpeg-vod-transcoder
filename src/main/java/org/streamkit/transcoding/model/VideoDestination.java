@@ -5,7 +5,11 @@ package org.streamkit.transcoding.model;
  */
 public class VideoDestination {
 
-    private String type; // aws-s3, ftp, etc
+    public final static String AWSS3 = "aws-s3";
+    public final static String FTP = "ftp";
+    public final static String LOCALFS = "local-fs";
+
+    private String type = LOCALFS; // aws-s3, ftp, etc
     private String url;
     private String file_name_template;
 

@@ -1,20 +1,11 @@
 package org.streamkit.transcoding.job;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.batch.core.*;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.integration.annotation.IntegrationComponentScan;
-import org.springframework.integration.channel.QueueChannel;
-import org.springframework.integration.config.EnableIntegration;
-import org.springframework.integration.ftp.session.DefaultFtpSessionFactory;
-import org.springframework.messaging.PollableChannel;
-
-import java.text.SimpleDateFormat;
 
 /**
  * Created by ddascal on 22/01/15.
@@ -31,7 +22,7 @@ public class MainTranscodingBatchJob {
                 .start(getReadConfigJob())
                 .next(getTranscodeStep())
                 .next(getSnapshotStep())
-                .next(getPersistVideoStep())
+                .next(getPersistVideoS3Step())
                 .next(getPersistVideoFtpStep())
                 .listener(getTranscodingListener())
                 .build();
@@ -43,7 +34,7 @@ public class MainTranscodingBatchJob {
     }
 
     @Bean
-    protected PersistVideoS3 getPersistVideoStep() {
+    protected PersistVideoS3 getPersistVideoS3Step() {
         return new PersistVideoS3();
     }
 
@@ -67,9 +58,5 @@ public class MainTranscodingBatchJob {
         return new TranscodeVideo();
     }
 
-    @Bean
-    public PollableChannel remoteFileOutputChannel() {
-        return new QueueChannel();
-    }
 
 }

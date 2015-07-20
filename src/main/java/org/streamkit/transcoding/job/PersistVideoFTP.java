@@ -1,5 +1,6 @@
 package org.streamkit.transcoding.job;
 
+import org.apache.commons.net.ftp.FTPClient;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobInterruptedException;
 import org.springframework.batch.core.Step;
@@ -11,13 +12,17 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.integration.annotation.IntegrationComponentScan;
+import org.springframework.integration.annotation.MessagingGateway;
 import org.springframework.integration.channel.QueueChannel;
 import org.springframework.integration.dsl.IntegrationFlow;
+import org.springframework.integration.dsl.IntegrationFlowDefinition;
 import org.springframework.integration.dsl.IntegrationFlows;
+import org.springframework.integration.dsl.core.Pollers;
 import org.springframework.integration.dsl.ftp.Ftp;
 import org.springframework.integration.file.FileHeaders;
 import org.springframework.integration.file.remote.gateway.AbstractRemoteFileOutboundGateway;
 import org.springframework.integration.ftp.session.DefaultFtpSessionFactory;
+import org.springframework.integration.scheduling.PollerMetadata;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
@@ -25,8 +30,12 @@ import org.springframework.messaging.PollableChannel;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 import org.streamkit.transcoding.model.TranscodingModel;
+import org.streamkit.transcoding.model.VideoDestination;
 
-import java.io.File;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,6 +45,7 @@ import java.util.regex.Pattern;
  */
 @Component
 public class PersistVideoFTP implements Step {
+    public static final String DEFAULT_OUTPUT_FOLDER = "/tmp/streamkit/";
     private Logger logger = Logger.getLogger(PersistVideoFTP.class.getName());
 
     @Autowired
@@ -44,7 +54,6 @@ public class PersistVideoFTP implements Step {
     @Autowired
     @Qualifier("toFtpChannel")
     private MessageChannel toFtpChannel;
-
 
     private FTPServerProperties ftpProps = new FTPServerProperties();
 
@@ -66,37 +75,60 @@ public class PersistVideoFTP implements Step {
 
     @Override
     public void execute(StepExecution stepExecution) throws JobInterruptedException {
+        logger.info("Persisting video to FTP");
         TranscodingModel model = (TranscodingModel) stepExecution.getJobExecution().getExecutionContext().get("model");
+
+        if (! model.getDestination().getType().equals(VideoDestination.FTP)) {
+            logger.info("Skipping step as the configuration didn't specify any FTP destination...");
+            stepExecution.setStatus(BatchStatus.COMPLETED);
+            return;
+        }
+//
         String destinationURL = model.getDestination().getUrl();
         ftpProps = getFtpProperties(destinationURL);
 
-        String fileName = "foo.file";
-        this.toFtpChannel.send(MessageBuilder.withPayload("foo")
-                .setHeader(FileHeaders.FILENAME, fileName)
-                .build());
+        String localFolder = (String) stepExecution.getJobExecution().getExecutionContext().get("output_local_folder");
+        if ( localFolder == null ) {
+            localFolder = DEFAULT_OUTPUT_FOLDER;
+        }
 
-        logger.info("Persisting video to FTP");
+        try {
+            Files.walk(Paths.get(localFolder))
+                    .filter((path) -> path.toFile().isFile() )
+                    .forEachOrdered(this::sendToFtp);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         stepExecution.setStatus(BatchStatus.COMPLETED);
+    }
+
+    private Boolean sendToFtp(Path file) {
+        final File fileA = file.toFile();
+        final Message<File> messageA = MessageBuilder.withPayload(fileA)
+                .setHeader(FileHeaders.FILENAME, fileA.getName())
+                .build();
+        return this.toFtpChannel.send(messageA);
     }
 
 
     protected FTPServerProperties getFtpProperties (String destinationURL) {
         FTPServerProperties ftpProps = new FTPServerProperties();
 
-        Pattern pattern = Pattern.compile("(\\/\\/|^)(?<username>\\w*):(?<password>\\w*)@(?<host>[\\w\\.]*)(?<port>:\\d*)?(?<path>[\\/\\w]*)");
+        Pattern pattern = Pattern.compile("(\\/\\/|^)(?<username>\\w*):(?<password>\\w*)@(?<host>[\\w\\.]*):?(?<port>\\d*)?(?<path>[\\/\\w]*)");
         Matcher matcher = pattern.matcher(destinationURL);
 
         while(matcher.find()) {
             ftpProps.setUsername(matcher.group("username"));
             ftpProps.setHost(matcher.group("password"));
             String port = matcher.group("port");
-            if (port != null && port.startsWith(":") && port.length() > 2) {
-                ftpProps.setPort(Integer.parseInt(port.substring(1)));
+            if (port != null && port.length() > 2) {
+                ftpProps.setPort(Integer.parseInt(port));
             } else {
                 ftpProps.setPort(21);
-                port = ":21";
+                port = "21";
             }
-            String url = matcher.group("host") + port + matcher.group("path");
+            String url = matcher.group("host") + ":" + port + matcher.group("path");
             ftpProps.setHost(url);
         }
 
@@ -111,9 +143,9 @@ public class PersistVideoFTP implements Step {
         factory.setPort(ftpProps.port);
         factory.setUsername(ftpProps.username);
         factory.setPassword(ftpProps.password);
+        factory.setClientMode(FTPClient.PASSIVE_LOCAL_DATA_CONNECTION_MODE);
         return factory;
     }
-
 
     @Bean
     @Qualifier("toFtpChannel")
@@ -121,13 +153,18 @@ public class PersistVideoFTP implements Step {
         return new QueueChannel();
     }
 
+    @Autowired
+    @Qualifier(value="ftpOutboundFlow")
+    private IntegrationFlow ftpOutboundFlow;
+
     @Bean
     public IntegrationFlow ftpOutboundFlow() {
         return IntegrationFlows.from("toFtpChannel")
                 .handle(Ftp.outboundAdapter(this.ftpSessionFactory)
                                 .useTemporaryFileName(false)
                                 .fileNameExpression("headers['" + FileHeaders.FILENAME + "']")
-                                .remoteDirectory("/tmp")
+                                .remoteDirectory("/")
+
                 ).get();
     }
 
