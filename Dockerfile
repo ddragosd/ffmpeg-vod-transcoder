@@ -29,7 +29,7 @@ VOLUME /var/log/streamkit/
 # dir to write the transcoding output into
 VOLUME /tmp/streamkit
 
-RUN cd /tmp/ && curl -LO "https://github.com/streamkit/ffmpeg-vod-transcoder/releases/download/transcoding-job-0.0.5/transcoding-job-0.0.5.jar" && mkdir -p /usr/local/vod-transcoder/ && mv transcoding-job*.jar /usr/local/vod-transcoder/vod-transcoder.jar
+RUN cd /tmp/ && curl -LO "https://github.com/streamkit/ffmpeg-vod-transcoder/releases/download/transcoding-job-0.0.6/transcoding-job-0.0.6.jar" && mkdir -p /usr/local/vod-transcoder/ && mv transcoding-job*.jar /usr/local/vod-transcoder/vod-transcoder.jar
 
 # this volume is used for local development
 VOLUME /usr/local/vod-transcoder
