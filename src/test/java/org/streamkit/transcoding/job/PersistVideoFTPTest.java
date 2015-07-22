@@ -22,29 +22,38 @@ public class PersistVideoFTPTest {
 
     @Test
     public void getFtpProperties_1_Test () throws JobInterruptedException {
-        PersistVideoFTP.FTPServerProperties props = ftp.getFtpProperties("http://username:password@ftp.streamkit.net:34234/directory/path");
-        assertEquals("username", props.getUsername());
-        assertEquals("password", props.getPassword());
+        PersistVideoFTP.FTPServerProperties props = ftp.getFtpProperties("ftp://usr1:pwdX@ftp.streamkit.net:34234/directory/path");
+        assertEquals("usr1", props.getUsername());
+        assertEquals("pwdX", props.getPassword());
         assertEquals(34234, props.getPort().intValue());
-        assertEquals("ftp.streamkit.net:34234/directory/path", props.getHost());
+        assertEquals("ftp.streamkit.net", props.getHost());
     }
 
     @Test
     public void getFtpProperties_2_Test () throws JobInterruptedException {
-        PersistVideoFTP.FTPServerProperties props = ftp.getFtpProperties("http://username:password@ftp.streamkit.net/directory/path");
-        assertEquals("username", props.getUsername());
-        assertEquals("password", props.getPassword());
+        PersistVideoFTP.FTPServerProperties props = ftp.getFtpProperties("ftp://usr2:pwdY@ftp.streamkit.net/directory/path");
+        assertEquals("usr2", props.getUsername());
+        assertEquals("pwdY", props.getPassword());
         assertEquals(21, props.getPort().intValue());
-        assertEquals("ftp.streamkit.net:21/directory/path", props.getHost());
+        assertEquals("ftp.streamkit.net", props.getHost());
     }
 
     @Test
     public void getFtpProperties_3_Test () throws JobInterruptedException {
-        PersistVideoFTP.FTPServerProperties props = ftp.getFtpProperties("http://username:password@ftp.streamkit.net");
+        PersistVideoFTP.FTPServerProperties props = ftp.getFtpProperties("ftp://username:pwd-!@ftp.streamkit.net");
         assertEquals("username", props.getUsername());
-        assertEquals("password", props.getPassword());
+        assertEquals("pwd-!", props.getPassword());
         assertEquals(21, props.getPort().intValue());
-        assertEquals("ftp.streamkit.net:21", props.getHost());
+        assertEquals("ftp.streamkit.net", props.getHost());
+    }
+
+    @Test
+    public void getFtpProperties_with_port_no_subpath () throws JobInterruptedException {
+        PersistVideoFTP.FTPServerProperties props = ftp.getFtpProperties("ftp://username:pwd_123_#$!@ftp.streamkit.net:1234");
+        assertEquals("username", props.getUsername());
+        assertEquals("pwd_123_#$!", props.getPassword());
+        assertEquals(1234, props.getPort().intValue());
+        assertEquals("ftp.streamkit.net", props.getHost());
     }
 
 

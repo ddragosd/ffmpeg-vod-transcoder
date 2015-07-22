@@ -7,25 +7,15 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-import org.springframework.integration.annotation.IntegrationComponentScan;
-import org.springframework.integration.annotation.MessagingGateway;
 import org.springframework.integration.channel.QueueChannel;
 import org.springframework.integration.dsl.IntegrationFlow;
-import org.springframework.integration.dsl.IntegrationFlowDefinition;
 import org.springframework.integration.dsl.IntegrationFlows;
-import org.springframework.integration.dsl.core.Pollers;
 import org.springframework.integration.dsl.ftp.Ftp;
 import org.springframework.integration.file.FileHeaders;
-import org.springframework.integration.file.remote.gateway.AbstractRemoteFileOutboundGateway;
 import org.springframework.integration.ftp.session.DefaultFtpSessionFactory;
-import org.springframework.integration.scheduling.PollerMetadata;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.PollableChannel;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
@@ -83,9 +73,13 @@ public class PersistVideoFTP implements Step {
             stepExecution.setStatus(BatchStatus.COMPLETED);
             return;
         }
-//
+
         String destinationURL = model.getDestination().getUrl();
         ftpProps = getFtpProperties(destinationURL);
+        this.ftpSessionFactory.setHost(ftpProps.getHost());
+        this.ftpSessionFactory.setUsername(ftpProps.getUsername());
+        this.ftpSessionFactory.setPassword(ftpProps.getPassword());
+        this.ftpSessionFactory.setPort(ftpProps.getPort());
 
         String localFolder = (String) stepExecution.getJobExecution().getExecutionContext().get("output_local_folder");
         if ( localFolder == null ) {
@@ -115,12 +109,12 @@ public class PersistVideoFTP implements Step {
     protected FTPServerProperties getFtpProperties (String destinationURL) {
         FTPServerProperties ftpProps = new FTPServerProperties();
 
-        Pattern pattern = Pattern.compile("(\\/\\/|^)(?<username>\\w*):(?<password>\\w*)@(?<host>[\\w\\.]*):?(?<port>\\d*)?(?<path>[\\/\\w]*)");
+        Pattern pattern = Pattern.compile("(ftp:\\/\\/|^)(?<username>\\w*):(?<password>[\\w-_!$#]*)@(?<host>[\\w\\.]*):?(?<port>\\d*)?(?<path>[\\/\\w]*)");
         Matcher matcher = pattern.matcher(destinationURL);
 
         while(matcher.find()) {
             ftpProps.setUsername(matcher.group("username"));
-            ftpProps.setHost(matcher.group("password"));
+            ftpProps.setPassword(matcher.group("password"));
             String port = matcher.group("port");
             if (port != null && port.length() > 2) {
                 ftpProps.setPort(Integer.parseInt(port));
@@ -128,8 +122,8 @@ public class PersistVideoFTP implements Step {
                 ftpProps.setPort(21);
                 port = "21";
             }
-            String url = matcher.group("host") + ":" + port + matcher.group("path");
-            ftpProps.setHost(url);
+            //String url =  + ":" + port + matcher.group("path");
+            ftpProps.setHost(matcher.group("host"));
         }
 
         return ftpProps;
@@ -140,9 +134,9 @@ public class PersistVideoFTP implements Step {
     public DefaultFtpSessionFactory ftpSessionFactory() {
         DefaultFtpSessionFactory factory = new DefaultFtpSessionFactory();
         factory.setHost(ftpProps.getHost());
-        factory.setPort(ftpProps.port);
-        factory.setUsername(ftpProps.username);
-        factory.setPassword(ftpProps.password);
+        factory.setPort(ftpProps.getPort());
+        factory.setUsername(ftpProps.getUsername());
+        factory.setPassword(ftpProps.getPassword());
         factory.setClientMode(FTPClient.PASSIVE_LOCAL_DATA_CONNECTION_MODE);
         return factory;
     }
