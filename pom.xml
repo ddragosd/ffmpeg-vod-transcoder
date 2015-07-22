@@ -4,7 +4,7 @@
 
 	<groupId>org.streamkit.microservice</groupId>
 	<artifactId>transcoding-job</artifactId>
-	<version>0.0.6-SNAPSHOT</version>
+	<version>0.0.6</version>
 	<packaging>jar</packaging>
 
 	<name>ffmpeg-vod-transcoder</name>
