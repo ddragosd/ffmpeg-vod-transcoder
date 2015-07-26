@@ -27,6 +27,7 @@ public class PersistVideoFTPTest {
         assertEquals("pwdX", props.getPassword());
         assertEquals(34234, props.getPort().intValue());
         assertEquals("ftp.streamkit.net", props.getHost());
+        assertEquals("/directory/path", props.getDir());
     }
 
     @Test
@@ -36,6 +37,7 @@ public class PersistVideoFTPTest {
         assertEquals("pwdY", props.getPassword());
         assertEquals(21, props.getPort().intValue());
         assertEquals("ftp.streamkit.net", props.getHost());
+        assertEquals("/directory/path", props.getDir());
     }
 
     @Test
@@ -45,6 +47,7 @@ public class PersistVideoFTPTest {
         assertEquals("pwd-!", props.getPassword());
         assertEquals(21, props.getPort().intValue());
         assertEquals("ftp.streamkit.net", props.getHost());
+        assertEquals("/", props.getDir());
     }
 
     @Test
@@ -54,6 +57,7 @@ public class PersistVideoFTPTest {
         assertEquals("pwd_123_#$!", props.getPassword());
         assertEquals(1234, props.getPort().intValue());
         assertEquals("ftp.streamkit.net", props.getHost());
+        assertEquals("/", props.getDir());
     }
 
 

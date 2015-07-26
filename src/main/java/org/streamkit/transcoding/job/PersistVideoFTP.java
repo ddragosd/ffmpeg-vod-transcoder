@@ -26,6 +26,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -75,7 +76,7 @@ public class PersistVideoFTP implements Step {
         }
 
         String destinationURL = model.getDestination().getUrl();
-        ftpProps = getFtpProperties(destinationURL);
+        this.ftpProps = getFtpProperties(destinationURL);
         this.ftpSessionFactory.setHost(ftpProps.getHost());
         this.ftpSessionFactory.setUsername(ftpProps.getUsername());
         this.ftpSessionFactory.setPassword(ftpProps.getPassword());
@@ -98,9 +99,11 @@ public class PersistVideoFTP implements Step {
     }
 
     private Boolean sendToFtp(Path file) {
+        logger.log(Level.INFO, "sending file:{0} to host:{1} dir:{2}", new Object[]{file.toAbsolutePath().toString(), this.ftpProps.getHost(), this.ftpProps.getDir()});
         final File fileA = file.toFile();
         final Message<File> messageA = MessageBuilder.withPayload(fileA)
                 .setHeader(FileHeaders.FILENAME, fileA.getName())
+                .setHeader(FileHeaders.REMOTE_DIRECTORY, ftpProps.getDir() )
                 .build();
         return this.toFtpChannel.send(messageA);
     }
@@ -116,11 +119,15 @@ public class PersistVideoFTP implements Step {
             ftpProps.setUsername(matcher.group("username"));
             ftpProps.setPassword(matcher.group("password"));
             String port = matcher.group("port");
+            String path = matcher.group("path");
             if (port != null && port.length() > 2) {
                 ftpProps.setPort(Integer.parseInt(port));
             } else {
                 ftpProps.setPort(21);
                 port = "21";
+            }
+            if ( path != null && ! path.isEmpty()) {
+                ftpProps.setDir(path);
             }
             //String url =  + ":" + port + matcher.group("path");
             ftpProps.setHost(matcher.group("host"));
@@ -156,9 +163,9 @@ public class PersistVideoFTP implements Step {
         return IntegrationFlows.from("toFtpChannel")
                 .handle(Ftp.outboundAdapter(this.ftpSessionFactory)
                                 .useTemporaryFileName(false)
+                                .autoCreateDirectory(true)
                                 .fileNameExpression("headers['" + FileHeaders.FILENAME + "']")
-                                .remoteDirectory("/")
-
+                                .remoteDirectoryExpression("headers['" + FileHeaders.REMOTE_DIRECTORY + "']")
                 ).get();
     }
 
@@ -167,6 +174,7 @@ public class PersistVideoFTP implements Step {
         private Integer port = 21;
         private String username = "username";
         private String password = "password";
+        private String dir = "/";
 
         public String getHost() {
             return host;
@@ -198,6 +206,14 @@ public class PersistVideoFTP implements Step {
 
         public void setPassword(String password) {
             this.password = password;
+        }
+
+        public String getDir() {
+            return dir;
+        }
+
+        public void setDir(String dir) {
+            this.dir = dir;
         }
     }
 
