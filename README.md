@@ -17,15 +17,16 @@ To start a job in Chronos make a `POST` request to `http://<master>:4400/schedul
 ```javascript
 { 
  "schedule": "R1//PT2M",
- "name": "transcoding-sample-footage",
+ "name": "transcoding-sample-footage-2",
  "container": {
    "type": "DOCKER",
    "image": "ddragosd/ffmpeg-vod-transcoder:latest",
    "network":"BRIDGE"
  },
- "command": "java -jar /usr/local/vod-transcoder/vod-transcoder.jar --configJson={\\\"source\\\":\\\"http://s3.footagesearch.com/demos/naturefootage/Q4/OF-04-Fish-Demo-Q4.mp4\\\"}",
+ "command": "java -jar /usr/local/vod-transcoder/vod-transcoder.jar --configJson=<replace-with-base64-encoded-json>",
+ "shell":"false",
  "cpus": "3",
- "mem": "1536"
+ "mem": "4096"
 }
 ```
 The current command was tested with Chronos `2.3.3` framework and Mesos `0.22.0`.
@@ -61,6 +62,11 @@ To pass extra parameters to the docker container, use `DOCKER_ARGS`:
 
 ```
     make docker-run DOCKER_ARGS=\"--configJson='`cat ./src/main/resources/default_config_2.json`'\ --debug\"
+```
+
+Using Base64 encoded configJson
+```
+    make docker-run DOCKER_ARGS=\"--configJson='`cat ./src/main/resources/default_config_2.json | base64`'\"
 ```
 
 The result of the encoding is saved into your home folder, under `~/tmp/streamkit/`.

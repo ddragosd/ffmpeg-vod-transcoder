@@ -143,4 +143,23 @@ public class TranscodeVideoTest {
         String filePath = "http://www.stremakit.net/content/video.file-name(1).avi";
         assertEquals("video.file-name(1)", transcodeVideo.extractFileName(filePath));
     }
+
+
+    @Test
+    public void testWithBase64EncodedJSON () throws JobInterruptedException {
+        TranscodingModel model = config.getTranscodingModel("ewogICJzb3VyY2UiOiJodHRwOi8vczMuZm9vdGFnZXNlYXJjaC5jb20vZGVtb3MvbmF0dXJlZm9vdGFnZS9RNC9PRi0wNC1GaXNoLURlbW8tUTQubXA0IiwKICAib3V0cHV0cyI6IFsKICAgIHsKICAgICAgImhlaWdodCI6IDEwODAsCiAgICAgICJ2aWRlb19iaXRyYXRlIjogMjIwMCwKICAgICAgInZpZGVvX2NvZGVjIjogImxpYngyNjQiLAogICAgICAiYXVkaW9fYml0cmF0ZSI6IDEyOCwKICAgICAgImF1ZGlvX2NvZGVjIjogImxpYmZka19hYWMiCiAgICB9LAogICAgewogICAgICAiaGVpZ2h0IjogNzIwLAogICAgICAidmlkZW9fYml0cmF0ZSI6IDExMDAsCiAgICAgICJ2aWRlb19jb2RlYyI6ICJsaWJ4MjY0IiwKICAgICAgImF1ZGlvX2JpdHJhdGUiOiAxMjgsCiAgICAgICJhdWRpb19jb2RlYyI6ICJsaWJmZGtfYWFjIgogICAgfSwKICAgIHsKICAgICAgImhlaWdodCI6IDQ4MCwKICAgICAgInZpZGVvX2JpdHJhdGUiOiA2MDAsCiAgICAgICJ2aWRlb19jb2RlYyI6ICJsaWJ4MjY0IiwKICAgICAgImF1ZGlvX2JpdHJhdGUiOiA5NiwKICAgICAgImF1ZGlvX2NvZGVjIjogImxpYmZka19hYWMiCiAgICB9LAogICAgewogICAgICAiaGVpZ2h0IjogMTQ0LAogICAgICAidmlkZW9fYml0cmF0ZSI6IDEwLAogICAgICAidmlkZW9fY29kZWMiOiAibGlieDI2NCIsCiAgICAgICJhdWRpb19iaXRyYXRlIjogNDgsCiAgICAgICJhdWRpb19jb2RlYyI6ICJsaWJmZGtfYWFjIgogICAgfQogIF0KfQ==");
+        assertEquals(4, model.getOutputs().size());
+
+        TranscodeVideo.VideoInputMetadata videoMetadata = new TranscodeVideo().new VideoInputMetadata();
+        videoMetadata.setHeight(355);
+        videoMetadata.setVideo_bitrate(100);
+        videoMetadata.setAudio_bitrate(86);
+
+        TranscodingModel reducedModel = transcodeVideo.reduceConfigToVideoMetadata(videoMetadata, model);
+        assertEquals(1, reducedModel.getOutputs().size());
+
+        assertEquals(355, reducedModel.getOutputs().get(0).getHeight());
+        assertEquals(100, reducedModel.getOutputs().get(0).getVideo_bitrate());
+        assertEquals(86, reducedModel.getOutputs().get(0).getAudio_bitrate());
+    }
 }
